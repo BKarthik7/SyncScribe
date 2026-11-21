@@ -5,8 +5,6 @@ import {
   TextInput,
   FlatList,
   Pressable,
-  Switch,
-  Text,
   Button,
   Alert,
 } from 'react-native';
@@ -20,7 +18,7 @@ import { useNotes } from '../context/NotesContext';
 export default function NotesScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const router = useRouter();
-  const { notes, createNote, deleteNote, isSyncing, toggleSync, syncNotes } =
+  const { notes, createNote, deleteNote, isSyncingNow, syncNotesManually } =
     useNotes();
 
   const filteredNotes = notes.filter(
@@ -56,23 +54,11 @@ export default function NotesScreen() {
       <Stack.Screen
         options={{
           headerRight: () => (
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: 10,
-              }}
-            >
-              {/* <Text style={{ fontSize: 16 }}>Sync</Text> */}
-              {/* <Switch
-                value={isSyncing}
-                onValueChange={() => {
-                  // toggleSync(!isSyncing);
-                  
-                }}
-              /> */}
-              <Button title="Pull" onPress={() => syncNotes()} />
-            </View>
+            <Button
+              title={isSyncingNow ? 'Syncing…' : 'Sync'}
+              disabled={isSyncingNow}
+              onPress={syncNotesManually}
+            />
           ),
         }}
       />
