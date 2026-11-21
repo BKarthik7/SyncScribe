@@ -8,6 +8,7 @@ import {
   Switch,
   Text,
   Button,
+  Alert,
 } from 'react-native';
 import { useState } from 'react';
 import { Stack, useRouter } from 'expo-router';
@@ -42,7 +43,12 @@ export default function NotesScreen() {
     <SwipeableNote
       note={item}
       onPress={() => router.push(`/note/${item.id}`)}
-      onDelete={() => deleteNote(item.id)}
+      onDelete={() => {
+        void deleteNote(item.id).catch((error) => {
+          console.error('Could not delete note:', error);
+          Alert.alert('Could not delete note', 'Please try again.');
+        });
+      }}
     />
   );
   return (

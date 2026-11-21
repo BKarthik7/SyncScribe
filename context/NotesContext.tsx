@@ -32,7 +32,7 @@ interface NotesContextType {
   notes: Note[];
   createNote: () => Promise<Note | undefined>;
   updateNote: (id: string, updates: Partial<Note>) => void;
-  deleteNote: (id: string) => void;
+  deleteNote: (id: string) => Promise<void>;
   syncNotes: () => void;
   toggleSync: (enabled: boolean) => void;
   isSyncing: boolean;
@@ -144,9 +144,9 @@ export function NotesProvider({ children }: { children: React.ReactNode }) {
     );
     fetchNotes();
   };
-  const deleteNote = (id: string) => {
-    db.runAsync('DELETE FROM notes WHERE id = ?', id);
-    fetchNotes();
+  const deleteNote = async (id: string) => {
+    await db.runAsync('DELETE FROM notes WHERE id = ?', id);
+    await fetchNotes();
   };
 
   return (
