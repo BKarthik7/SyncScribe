@@ -12,16 +12,10 @@ import Reanimated, {
 } from 'react-native-reanimated';
 import { format } from 'date-fns';
 import { Trash2 } from 'lucide-react-native';
+import type { Note } from '../context/NotesContext';
 
 LogBox.ignoreAllLogs(); // YOLO
 configureReanimatedLogger({ strict: false }); // YOLO
-
-interface Note {
-  id: string;
-  title: string;
-  content: string;
-  modifiedDate: Date;
-}
 
 interface Props {
   note: Note;

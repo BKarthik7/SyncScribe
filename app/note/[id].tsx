@@ -8,32 +8,38 @@ export default function NoteScreen() {
   const { id } = useLocalSearchParams();
   const db = useSQLiteContext();
   const router = useRouter();
-  const { notes, updateNote, isSyncingNow, syncNotesManually } = useNotes();
-  const [note, setNote] = useState({ title: '', content: '' });
+  const { updateNote, isSyncingNow, syncNotesManually } = useNotes();
+  const [note, setNote] = useState<{ title: string; content: string } | null>(null);
 
   useEffect(() => {
+    let cancelled = false;
+    setNote(null);
+
     const fetchNote = async () => {
       const currentNote = await db.getFirstAsync<Note>(
         'SELECT * FROM notes WHERE id = ?',
         [id as string]
       );
-      if (currentNote) {
+      if (currentNote && !cancelled) {
         setNote({
           title: currentNote.title || '',
           content: currentNote.content || '',
         });
       }
     };
-    fetchNote();
-  }, [id, notes]);
+    void fetchNote();
+    return () => {
+      cancelled = true;
+    };
+  }, [db, id]);
 
   const handleTitleChange = (title: string) => {
-    setNote((prev) => ({ ...prev, title }));
+    setNote((prev) => (prev ? { ...prev, title } : prev));
     updateNote(id as string, { title });
   };
 
   const handleContentChange = (content: string) => {
-    setNote((prev) => ({ ...prev, content }));
+    setNote((prev) => (prev ? { ...prev, content } : prev));
     updateNote(id as string, { content });
   };
 
@@ -41,7 +47,7 @@ export default function NoteScreen() {
     <>
       <Stack.Screen
         options={{
-          headerTitle: note.title || 'Untitled',
+          headerTitle: note?.title || 'Untitled',
           headerRight: () => (
             <Button
               title={isSyncingNow ? 'Syncing…' : 'Sync'}
@@ -51,27 +57,29 @@ export default function NoteScreen() {
           ),
         }}
       />
-      <View style={styles.container}>
-        <View style={styles.content}>
-          <TextInput
-            style={styles.titleInput}
-            value={note.title}
-            onChangeText={handleTitleChange}
-            placeholder="Title"
-            placeholderTextColor="#8E8E93"
-          />
-          <TextInput
-            style={styles.contentInput}
-            value={note.content}
-            onChangeText={handleContentChange}
-            placeholder="Note"
-            placeholderTextColor="#8E8E93"
-            multiline
-            textAlignVertical="top"
-            autoFocus
-          />
+      {note && (
+        <View style={styles.container}>
+          <View style={styles.content}>
+            <TextInput
+              style={styles.titleInput}
+              value={note.title}
+              onChangeText={handleTitleChange}
+              placeholder="Title"
+              placeholderTextColor="#8E8E93"
+            />
+            <TextInput
+              style={styles.contentInput}
+              value={note.content}
+              onChangeText={handleContentChange}
+              placeholder="Note"
+              placeholderTextColor="#8E8E93"
+              multiline
+              textAlignVertical="top"
+              autoFocus
+            />
+          </View>
         </View>
-      </View>
+      )}
     </>
   );
 }
