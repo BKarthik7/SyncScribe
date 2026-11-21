@@ -15,6 +15,8 @@ import { Stack, useRouter } from 'expo-router';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { Plus, Search, X } from 'lucide-react-native';
 import { SwipeableNote } from '../components/SwipeableNote';
+import type { ListRenderItem } from 'react-native';
+import type { Note } from '../context/NotesContext';
 import { useNotes } from '../context/NotesContext';
 
 export default function NotesScreen() {
@@ -39,7 +41,7 @@ export default function NotesScreen() {
     }
   };
 
-  const renderNote = ({ item }: any) => (
+  const renderNote: ListRenderItem<Note> = ({ item }) => (
     <SwipeableNote
       note={item}
       onPress={() => router.push(`/note/${item.id}`)}
@@ -80,7 +82,7 @@ export default function NotesScreen() {
         <FlatList
           data={filteredNotes}
           renderItem={renderNote}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item) => String(item.id)}
           ListHeaderComponent={() => (
             <View style={styles.headerContainer}>
               <View style={styles.searchContainer}>
