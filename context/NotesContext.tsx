@@ -120,29 +120,18 @@ export function NotesProvider({ children }: { children: React.ReactNode }) {
   };
 
   const updateNote = async (id: string, updates: Partial<Note>) => {
-    // First get the existing note
-    const existingNote = await db.getFirstAsync<Note>(
-      'SELECT * FROM notes WHERE id = ?',
-      [id]
-    );
-
-    if (!existingNote) return;
-
-    // Merge existing values with updates
-    const updatedNote = {
-      title: updates.title ?? existingNote.title,
-      content: updates.content ?? existingNote.content,
-      modifiedDate: updates.modifiedDate ?? new Date(),
-    };
-
     await db.runAsync(
-      'UPDATE notes SET title = ?, content = ?, modifiedDate = ? WHERE id = ?',
-      updatedNote.title,
-      updatedNote.content,
-      updatedNote.modifiedDate.toISOString(),
+      `UPDATE notes
+       SET title = COALESCE(?, title),
+           content = COALESCE(?, content),
+           modifiedDate = ?
+       WHERE id = ?`,
+      updates.title ?? null,
+      updates.content ?? null,
+      (updates.modifiedDate ?? new Date()).toISOString(),
       id
     );
-    fetchNotes();
+    await fetchNotes();
   };
   const deleteNote = async (id: string) => {
     await db.runAsync('DELETE FROM notes WHERE id = ?', id);
