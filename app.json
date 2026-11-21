@@ -2,7 +2,7 @@
   "expo": {
     "name": "SyncScribe",
     "slug": "syncscribe",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "myapp",
@@ -11,7 +11,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.bkarthik.syncscribe",
-      "buildNumber": "2"
+      "buildNumber": "3"
     },
     "web": {
       "bundler": "metro",
@@ -33,7 +33,7 @@
     },
     "android": {
       "package": "com.bkarthik.syncscribe",
-      "versionCode": 2
+      "versionCode": 3
     }
   }
 }
