@@ -51,9 +51,17 @@ token with read and write access. SyncScribe stores them on the device using
 Expo SecureStore. Use **Settings** to update the connection. Each database
 has its own local replica.
 
-The v1.0.1 APK uses a dedicated release signing key. Android requires a fresh
+APKs from v1.0.1 onward use a dedicated release signing key. Android requires a fresh
 install when moving from the debug-signed v1.0.0 APK. Sync existing notes and
 back up any unsynced edits before uninstalling the old app.
+
+For v1.0.2 and later, use the **arm64-v8a** APK on most phones or
+**x86_64** on a matching Android emulator. Both are standalone APKs.
+
+To build both release APKs, run `scripts/build-android-release.sh` with
+`ANDROID_HOME`, `SYNC_SCRIBE_KEYSTORE`, and
+`SYNC_SCRIBE_KEYSTORE_PASSWORD_FILE` set. The script signs each APK using the
+`syncscribe-release` alias by default and writes artifacts to `dist/android`.
 
 ## Development environment variables
 
