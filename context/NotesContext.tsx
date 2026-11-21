@@ -9,12 +9,6 @@ import {
   useRef,
 } from 'react';
 
-if (
-  !process.env.EXPO_PUBLIC_TURSO_DB_URL ||
-  !process.env.EXPO_PUBLIC_TURSO_DB_AUTH_TOKEN
-) {
-  throw new Error('Turso DB URL and Auth Token must be set in .env.local');
-}
 export interface Note {
   id: string;
   title: string | null;
@@ -22,15 +16,9 @@ export interface Note {
   modifiedDate: Date | null;
 }
 
-export const DB_NAME = 'syncscribe'; // Turso db name
-
-export const tursoOptions = {
-  url: process.env.EXPO_PUBLIC_TURSO_DB_URL,
-  authToken: process.env.EXPO_PUBLIC_TURSO_DB_AUTH_TOKEN,
-};
-
 interface NotesContextType {
   notes: Note[];
+  editConnection: () => void;
   createNote: () => Promise<Note | undefined>;
   updateNote: (id: string, updates: Partial<Note>) => void;
   deleteNote: (id: string) => Promise<void>;
@@ -42,7 +30,13 @@ interface NotesContextType {
 
 const NotesContext = createContext<NotesContextType | null>(null);
 
-export function NotesProvider({ children }: { children: React.ReactNode }) {
+export function NotesProvider({
+  children,
+  editConnection,
+}: {
+  children: React.ReactNode;
+  editConnection: () => void;
+}) {
   const db = useSQLiteContext();
   const [notes, setNotes] = useState<Note[]>([]);
   const [isSyncing, setIsSyncing] = useState(false);
@@ -157,6 +151,7 @@ export function NotesProvider({ children }: { children: React.ReactNode }) {
     <NotesContext.Provider
       value={{
         notes,
+        editConnection,
         createNote,
         updateNote,
         deleteNote,

@@ -44,9 +44,20 @@ Powered by Expo ❤️
    - Create a database in the new group.
    - Generate and copy a database token with write/read permissions.
 
-## Environment Variables
+## Android release setup
 
-1. Rename `.env.local.example` to `.env.local`.
+Open the installed app and enter your own Turso database URL and a database
+token with read and write access. SyncScribe stores them on the device using
+Expo SecureStore. Use **Settings** to update the connection. Each database
+has its own local replica.
+
+The v1.0.1 APK uses a dedicated release signing key. Android requires a fresh
+install when moving from the debug-signed v1.0.0 APK. Sync existing notes and
+back up any unsynced edits before uninstalling the old app.
+
+## Development environment variables
+
+1. Copy `.env.local.example` to `.env.local`.
 2. Add the following variables:
    ```env
    EXPO_PUBLIC_TURSO_DB_URL=libsql://xxxx.aws-us-east-1.turso.io
