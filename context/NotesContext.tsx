@@ -44,6 +44,7 @@ export function NotesProvider({ children }: { children: React.ReactNode }) {
   const db = useSQLiteContext();
   const [notes, setNotes] = useState<Note[]>([]);
   const [isSyncing, setIsSyncing] = useState(false);
+  const syncInFlight = useRef<Promise<void> | null>(null);
   const syncIntervalRef = useRef<NodeJS.Timeout>();
 
   useEffect(() => {
@@ -65,28 +66,33 @@ export function NotesProvider({ children }: { children: React.ReactNode }) {
     setNotes(notes);
   }, [db]);
 
-  const syncNotes = useCallback(async () => {
-    console.log('Syncing notes with Turso DB...');
+  const syncNotes = useCallback(() => {
+    if (syncInFlight.current) return syncInFlight.current;
 
-    try {
-      await db.syncLibSQL();
-      await fetchNotes();
-      console.log('Synced notes with Turso DB');
-    } catch (e) {
-      console.log(e);
-    }
+    const sync = Promise.resolve()
+      .then(() => db.syncLibSQL())
+      .then(fetchNotes)
+      .catch((error) => {
+        console.log('Could not sync notes with Turso:', error);
+      })
+      .finally(() => {
+        syncInFlight.current = null;
+      });
+
+    syncInFlight.current = sync;
+    return sync;
   }, [db, fetchNotes]);
 
   const toggleSync = useCallback(
-    async (enabled: boolean) => {
+    (enabled: boolean) => {
       setIsSyncing(enabled);
-      if (enabled) {
-        console.log('Starting sync interval...');
-        await syncNotes(); // Sync immediately when enabled
-        syncIntervalRef.current = setInterval(syncNotes, 2000);
-      } else if (syncIntervalRef.current) {
-        console.log('Stopping sync interval...');
+      if (syncIntervalRef.current !== undefined) {
         clearInterval(syncIntervalRef.current);
+        syncIntervalRef.current = undefined;
+      }
+      if (enabled) {
+        syncIntervalRef.current = setInterval(syncNotes, 2000);
+        void syncNotes();
       }
     },
     [syncNotes]
