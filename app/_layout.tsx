@@ -20,7 +20,7 @@ export default function RootLayout() {
       onInit={async (db: SQLiteDatabase) => {
         try {
           // Always sync libSQL first to prevent conflicts between local and remote databases
-          db.syncLibSQL();
+          await db.syncLibSQL();
         } catch (e) {
           console.log('Error onInit syncing libSQL:', e);
         }
