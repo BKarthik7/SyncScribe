@@ -8,7 +8,7 @@ export default function NoteScreen() {
   const { id } = useLocalSearchParams();
   const db = useSQLiteContext();
   const router = useRouter();
-  const { updateNote, syncNotes } = useNotes();
+  const { updateNote, isSyncingNow, syncNotesManually } = useNotes();
   const [note, setNote] = useState<{ title: string; content: string } | null>(null);
 
   useEffect(() => {
@@ -50,10 +50,9 @@ export default function NoteScreen() {
           headerTitle: note?.title || 'Untitled',
           headerRight: () => (
             <Button
-              title="Push"
-              onPress={() => {
-                void syncNotes();
-              }}
+              title={isSyncingNow ? 'Syncing…' : 'Sync'}
+              disabled={isSyncingNow}
+              onPress={syncNotesManually}
             />
           ),
         }}

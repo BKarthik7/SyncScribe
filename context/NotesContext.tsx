@@ -1,4 +1,5 @@
 import { useSQLiteContext } from 'expo-sqlite';
+import { Alert } from 'react-native';
 import {
   createContext,
   useCallback,
@@ -33,7 +34,8 @@ interface NotesContextType {
   createNote: () => Promise<Note | undefined>;
   updateNote: (id: string, updates: Partial<Note>) => void;
   deleteNote: (id: string) => Promise<void>;
-  syncNotes: () => void;
+  syncNotesManually: () => void;
+  isSyncingNow: boolean;
   toggleSync: (enabled: boolean) => void;
   isSyncing: boolean;
 }
@@ -44,7 +46,8 @@ export function NotesProvider({ children }: { children: React.ReactNode }) {
   const db = useSQLiteContext();
   const [notes, setNotes] = useState<Note[]>([]);
   const [isSyncing, setIsSyncing] = useState(false);
-  const syncInFlight = useRef<Promise<void> | null>(null);
+  const [isSyncingNow, setIsSyncingNow] = useState(false);
+  const syncInFlight = useRef<Promise<boolean> | null>(null);
   const syncIntervalRef = useRef<NodeJS.Timeout>();
 
   useEffect(() => {
@@ -69,19 +72,31 @@ export function NotesProvider({ children }: { children: React.ReactNode }) {
   const syncNotes = useCallback(() => {
     if (syncInFlight.current) return syncInFlight.current;
 
+    setIsSyncingNow(true);
     const sync = Promise.resolve()
       .then(() => db.syncLibSQL())
       .then(fetchNotes)
+      .then(() => true)
       .catch((error) => {
         console.log('Could not sync notes with Turso:', error);
+        return false;
       })
       .finally(() => {
         syncInFlight.current = null;
+        setIsSyncingNow(false);
       });
 
     syncInFlight.current = sync;
     return sync;
   }, [db, fetchNotes]);
+
+  const syncNotesManually = useCallback(async () => {
+    if (await syncNotes()) return;
+    Alert.alert(
+      'Sync failed',
+      'Your notes are still on this device. Check your connection and try again.'
+    );
+  }, [syncNotes]);
 
   const toggleSync = useCallback(
     (enabled: boolean) => {
@@ -145,7 +160,8 @@ export function NotesProvider({ children }: { children: React.ReactNode }) {
         createNote,
         updateNote,
         deleteNote,
-        syncNotes,
+        syncNotesManually,
+        isSyncingNow,
         toggleSync,
         isSyncing,
       }}
