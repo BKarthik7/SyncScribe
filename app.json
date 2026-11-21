@@ -2,7 +2,7 @@
   "expo": {
     "name": "SyncScribe",
     "slug": "syncscribe",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "myapp",
@@ -10,7 +10,8 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.bkarthik.syncscribe"
+      "bundleIdentifier": "com.bkarthik.syncscribe",
+      "buildNumber": "2"
     },
     "web": {
       "bundler": "metro",
@@ -24,13 +25,15 @@
         {
           "useLibSQL": true
         }
-      ]
+      ],
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true
     },
     "android": {
-      "package": "com.bkarthik.syncscribe"
+      "package": "com.bkarthik.syncscribe",
+      "versionCode": 2
     }
   }
 }

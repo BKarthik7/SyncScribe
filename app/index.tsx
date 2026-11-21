@@ -20,7 +20,7 @@ import { useNotes } from '../context/NotesContext';
 export default function NotesScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const router = useRouter();
-  const { notes, createNote, deleteNote, isSyncingNow, syncNotesManually } =
+  const { notes, createNote, deleteNote, isSyncingNow, syncNotesManually, editConnection } =
     useNotes();
 
   const filteredNotes = notes.filter(
@@ -56,11 +56,14 @@ export default function NotesScreen() {
       <Stack.Screen
         options={{
           headerRight: () => (
-            <Button
-              title={isSyncingNow ? 'Syncing…' : 'Sync'}
-              disabled={isSyncingNow}
-              onPress={syncNotesManually}
-            />
+            <View style={{ flexDirection: 'row', gap: 8 }}>
+              <Button title="Settings" onPress={editConnection} disabled={isSyncingNow} />
+              <Button
+                title={isSyncingNow ? 'Syncing…' : 'Sync'}
+                disabled={isSyncingNow}
+                onPress={syncNotesManually}
+              />
+            </View>
           ),
         }}
       />

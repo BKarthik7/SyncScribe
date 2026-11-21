@@ -1,22 +1,77 @@
 import { Stack } from 'expo-router';
 import { useFrameworkReady } from '@/hooks/useFrameworkReady';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { DB_NAME, NotesProvider, tursoOptions } from '../context/NotesContext';
+import { NotesProvider } from '../context/NotesContext';
 import { SQLiteDatabase, SQLiteProvider } from 'expo-sqlite';
-import { Suspense } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
+import * as SecureStore from 'expo-secure-store';
+import { getTursoHostname, TursoConnection, TursoSetup } from '../components/TursoSetup';
 import { ActivityIndicator, StatusBar, StyleSheet, Text, View } from 'react-native';
+
+const connectionKey = 'turso-connection';
+const developmentUrl = __DEV__ ? process.env.EXPO_PUBLIC_TURSO_DB_URL : undefined;
+const developmentToken = __DEV__ ? process.env.EXPO_PUBLIC_TURSO_DB_AUTH_TOKEN : undefined;
+const developmentConnection = developmentUrl && developmentToken
+  ? { url: developmentUrl, authToken: developmentToken }
+  : undefined;
 
 export default function RootLayout() {
   useFrameworkReady();
+  const [connection, setConnection] = useState<TursoConnection | null | undefined>(undefined);
+  const [editing, setEditing] = useState(false);
+  const databaseOptions = useMemo(() => ({ libSQLOptions: connection ?? undefined }), [connection]);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadConnection() {
+      let saved: TursoConnection | null = null;
+      try {
+        const value = await SecureStore.getItemAsync(connectionKey);
+        if (value) {
+          const stored = JSON.parse(value) as Partial<TursoConnection>;
+          if (typeof stored.url === 'string' && getTursoHostname(stored.url) &&
+              typeof stored.authToken === 'string' && stored.authToken) {
+            saved = { url: stored.url, authToken: stored.authToken };
+          }
+        }
+      } catch {
+        // An unavailable or invalid saved connection can be set up again.
+      }
+      if (!cancelled) setConnection(saved ?? developmentConnection ?? null);
+    }
+    void loadConnection();
+    return () => { cancelled = true; };
+  }, []);
+
+  if (connection === undefined) return <DatabaseStartup />;
+  if (connection === null || editing) {
+    return (
+      <TursoSetup
+        connection={connection ?? undefined}
+        onCancel={connection ? () => setEditing(false) : undefined}
+        onSave={async (nextConnection) => {
+          await SecureStore.setItemAsync(connectionKey, JSON.stringify(nextConnection));
+          setConnection(nextConnection);
+          setEditing(false);
+        }}
+      />
+    );
+  }
+
+  const databaseName = connection === developmentConnection
+    ? 'syncscribe'
+    : `syncscribe-${getTursoHostname(connection.url)}`;
 
   return (
     <Suspense fallback={<DatabaseStartup />}>
-      <NotesDatabase />
+      <NotesDatabase
+        databaseName={databaseName}
+        options={databaseOptions}
+        editConnection={() => setEditing(true)}
+      />
     </Suspense>
   );
 }
-
-const databaseOptions = { libSQLOptions: tursoOptions };
 
 async function initializeDatabase(db: SQLiteDatabase) {
   try {
@@ -75,15 +130,19 @@ async function initializeDatabase(db: SQLiteDatabase) {
   await db.execAsync(`PRAGMA user_version = ${DATABASE_VERSION}`);
 }
 
-function NotesDatabase() {
+function NotesDatabase({ databaseName, options, editConnection }: {
+  databaseName: string;
+  options: { libSQLOptions?: TursoConnection };
+  editConnection: () => void;
+}) {
   return (
     <SQLiteProvider
       useSuspense
-      databaseName={DB_NAME}
-      options={databaseOptions}
+      databaseName={databaseName}
+      options={options}
       onInit={initializeDatabase}
     >
-      <NotesProvider>
+      <NotesProvider editConnection={editConnection}>
         <GestureHandlerRootView style={{ flex: 1 }}>
           <Stack
             screenOptions={{
