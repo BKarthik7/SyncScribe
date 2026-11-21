@@ -76,3 +76,29 @@ Powered by Expo ❤️
    ```bash
    npx expo start
    ```
+
+## Android emulator and libSQL
+
+Expo SDK 52's bundled x86-64 libSQL library can fail to load with
+`cannot locate symbol "__extenddftf2"`. On an emulator that supports
+running ARM64 apps, use an ARM64 debug build with extracted native libraries.
+Check the emulator before building:
+
+```bash
+adb shell getprop ro.product.cpu.abilist
+```
+
+If the list includes `arm64-v8a`, run these commands from the project root
+with JDK 17 selected and the Android SDK on your path:
+
+```bash
+npx expo prebuild --platform android
+(cd android && ./gradlew :app:assembleDebug \
+  -PreactNativeArchitectures=arm64-v8a -Pexpo.useLegacyPackaging=true)
+adb install -r --abi arm64-v8a android/app/build/outputs/apk/debug/app-debug.apk
+npx expo start --dev-client
+```
+
+Open SyncScribe on the emulator and connect it to Metro. Use a disposable
+Turso database and a test-only token for sync tests. A local libSQL server
+that accepts SQL queries can still return 404 on replication requests.
